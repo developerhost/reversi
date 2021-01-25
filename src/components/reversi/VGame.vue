@@ -6,8 +6,19 @@
       <VBoard
         :board="board"
       />
-      <h2>{{}}</h2>
+      <h2>{{ current }}</h2>
     </v-layout>
+    <v-layout
+      justify-center
+    >
+      <h2>白の数: {{ board.whites }}</h2>
+    </v-layout>
+    <v-layout
+      justify-center
+      >
+      <h2>黒の数: {{ board.blacks }}</h2>
+    </v-layout>
+      
   </v-container>
 </template>
 

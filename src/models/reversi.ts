@@ -31,7 +31,7 @@ export class Cell {
 //座標のクラスを作成
 export class Point {
   //本当はいらない部分
-  public get isNone(): any {
+  public get isNone(): boolean {
     return this.state === CellState.None;
   }
   public state: CellState = CellState.None;
@@ -60,6 +60,22 @@ export class Row {
     this.num = rowNumber;
     this.cells = [...Array(8).keys()].map(i => new Cell(i, rowNumber));
   }
+
+  public get blacks(): number {
+    let count = 0;
+    this.cells.forEach(c => {
+      if (c.isBlack) count++
+    })
+    return count;
+  }
+
+  public get whites(): number {
+    let count = 0;
+    this.cells.forEach(c => {
+      if (c.isWhite) count++
+    })
+    return count;
+  }
 }
 
 
@@ -82,8 +98,6 @@ export class Board {
   public put(p: Point) {
     if(!this.ref(p).isNone) { return } //すでに石が置いてあるなら何もしない
 
-    console.log(this.search(p));
-
     //ひっくり返せないところ＝return
     const reversedList = this.search(p);
     if(reversedList.length === 0) { return }
@@ -92,13 +106,10 @@ export class Board {
     
     this.ref(p).state = this.turn; //クリックで黒をおく
 
-    //turnを反転させる
-    if(this.turn === CellState.Black) {
-       this.turn = CellState.White;
-     } else {
-       this.turn = CellState.Black;
-      } 
+    this.next();
 
+
+      if(this.shouldPass()) { this.next() }
   }
 
   //現在のセルを返す
@@ -106,16 +117,26 @@ export class Board {
     return this.rows[p.y].cells[p.x];
   }
 
+  public next() {
+    //turnを反転させる
+    if(this.turn === CellState.Black) {
+      this.turn = CellState.White;
+    } else {
+      this.turn = CellState.Black;
+     } 
+  }
+
   //ある場所に石をおく時に、ひっくり返る石のリスト
   public search(p: Point): Point[] {
-    const self = this;
+    if(this.ref(p).isNone) return [];
+    // const self = this;
     //再起的に探索するメソッド。nextは次に探索する場所を探すメソッド。
     const _search = (_p: Point, next: (pre: Point) => Point, lst: Point[]): Point[] => {
       const _next = next(_p);
-      if(!_next.inBoard || self.ref(_next).isNone) {
+      if(!_next.inBoard || this.ref(_next).isNone) {
         return [];
       }
-      if (self.ref(_next).state !== self.turn){
+      if (this.ref(_next).state !== this.turn){
         lst.push(_next);
         return _search(_next, next, lst);
       }
@@ -132,6 +153,35 @@ export class Board {
     result = result.concat(_search(p, p => new Point(p.x - 1, p.y - 1), []));//concat=二つ以上の配列を結合
 
     return result;
+  }
+
+  public get blacks(): number {
+    let count = 0;
+    this.rows.forEach(r => {
+      count += r.blacks;
+    })
+    return count;
+  }
+
+  public get whites(): number {
+    let count = 0;
+    this.rows.forEach(r => {
+      count += r.whites;
+    })
+    return count;
+  }
+
+  //パス機能
+  public shouldPass(): boolean {
+    for (let i = 0; i < 8; i++) {
+      for (let j = 0; j < 8; j++) {
+        const reversedList = this.search(new Point(i, j));
+        if (reversedList.length > 0) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }
 
